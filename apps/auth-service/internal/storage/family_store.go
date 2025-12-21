@@ -6,8 +6,8 @@ import (
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
 )
 
-type Family = domain.Family
-
+// can be implemented by both sql.DB and sql.Tx (inside a transaction)
+// just capabilities needed by the stores, no implementation details
 type FamilyStore interface {
-	CreateFamily(ctx context.Context, family Family) error
+	Create(ctx context.Context, family domain.Family) error
 }

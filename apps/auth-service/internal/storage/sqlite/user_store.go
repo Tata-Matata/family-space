@@ -3,45 +3,44 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"strings"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
+// the exact type of attached sql executor (sql.DB, sql.Tx etc)
+// defines how the store will perform sql operations - in a transaction or not;
+// this decision is made on the service layer (not on the store layer)
 type UserStore struct {
-	db *sql.DB
+	sql storage.SQLExecutor
 }
 
-func NewUserStore(db *sql.DB) *UserStore {
-	return &UserStore{db: db}
+func NewUserStore(sqlExec storage.SQLExecutor) *UserStore {
+	return &UserStore{sql: sqlExec}
 }
 
-func (userStore *UserStore) Create(ctx context.Context, user domain.User) error {
-	const query = `
-	  INSERT INTO users (id, email, password_hash, created_at)
-	  VALUES (?, ?, ?, ?)
+func (store *UserStore) Create(ctx context.Context, user domain.User) error {
+	const q = `
+		INSERT INTO users (id, email, password_hash, created_at)
+		VALUES (?, ?, ?, ?)
 	`
 
-	_, err := userStore.db.ExecContext(
+	_, err := store.sql.ExecContext(
 		ctx,
-		query,
+		q,
 		user.ID,
 		user.Email,
 		user.PasswordHash,
 		user.CreatedAt,
 	)
+
 	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE") {
-			return storage.ErrAlreadyExists
-		}
 		return err
 	}
-
 	return nil
 }
 
-func (userStore *UserStore) GetByEmail(ctx context.Context, email string) (domain.User, error) {
+func (store *UserStore) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 
 	const query = `
 	  SELECT id, email, password_hash, created_at
@@ -50,7 +49,7 @@ func (userStore *UserStore) GetByEmail(ctx context.Context, email string) (domai
 	`
 
 	var user domain.User
-	err := userStore.db.QueryRowContext(ctx, query, email).
+	err := store.sql.QueryRowContext(ctx, query, email).
 		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt)
 
 	if err != nil {

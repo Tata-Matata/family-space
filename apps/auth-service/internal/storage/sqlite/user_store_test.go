@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"testing"
 	"time"
@@ -34,6 +35,8 @@ func setupTestDB(test *testing.T) *UserStore {
 		db.Close()
 		os.Remove(dbPath)
 	})
+	var _ storage.SQLExecutor = db
+	var _ storage.SQLExecutor = (*sql.Tx)(nil)
 
 	return NewUserStore(db)
 }

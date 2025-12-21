@@ -1,7 +1,10 @@
 package domain
 
+import "time"
+
 type Membership struct {
-	user_id   string
-	family_id string
-	role      string // (owner | member)
+	UserID    string
+	FamilyID  string
+	Role      string // (owner | member)
+	CreatedAt time.Time
 }

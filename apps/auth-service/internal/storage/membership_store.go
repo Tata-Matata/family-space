@@ -8,7 +8,10 @@ import (
 
 type Membership = domain.Membership
 
+// can be implemented by both sql.DB and sql.Tx (inside a transaction)
+// just capabilities needed by the stores, no implementation details
 type MembershipStore interface {
-	AddMembership(ctx context.Context, m Membership) error
+	Create(ctx context.Context, m Membership) error
+	GetByUserID(ctx context.Context, userID string) (Membership, error)
 	GetUserFamily(ctx context.Context, userID string) (Membership, error)
 }
