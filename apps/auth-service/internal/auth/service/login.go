@@ -43,7 +43,7 @@ func (svc *LoginService) Login(
 ) (User, error) {
 
 	// here the decision is made to use a transaction
-	tx, err := svc.db.BeginTx(ctx, nil)
+	tx, err := svc.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return User{}, err
 	}
@@ -52,7 +52,7 @@ func (svc *LoginService) Login(
 	userStore := svc.userStoreProvider(tx)
 	user, err := userStore.GetByEmail(ctx, email)
 	if err != nil {
-		// user not found OR DB error
+		// hide “user not found” vs “wrong password” distinction
 		return User{}, ErrInvalidCredentials
 	}
 
@@ -66,8 +66,9 @@ func (svc *LoginService) Login(
 		return User{}, ErrInvalidCredentials
 	}
 
-	//end of transaction
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return User{}, err
+	}
 
-	return User{}, nil
+	return user, nil
 }
