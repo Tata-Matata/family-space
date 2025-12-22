@@ -30,25 +30,25 @@ func NewLoginHandler(
 	}
 }
 
-func (handler *LoginHandler) ServeHTTP(responseWriter http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+func (handler *LoginHandler) ServeHTTP(responseWriter http.ResponseWriter, httpReq *http.Request) {
+	if httpReq.Method != http.MethodPost {
 		http.Error(responseWriter, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var reqBody loginRequest
+	if err := json.NewDecoder(httpReq.Body).Decode(&reqBody); err != nil {
 		http.Error(responseWriter, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	req.Email = strings.TrimSpace(req.Email)
-	if req.Email == "" || req.Password == "" {
+	reqBody.Email = strings.TrimSpace(reqBody.Email)
+	if reqBody.Email == "" || reqBody.Password == "" {
 		http.Error(responseWriter, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	token, err := handler.loginSvc.Login(r.Context(), req.Email, req.Password)
+	token, err := handler.loginSvc.Login(httpReq.Context(), reqBody.Email, reqBody.Password)
 	if err != nil {
 		if errors.Is(err, errs.ErrInvalidCredentials) {
 			http.Error(responseWriter, "invalid credentials", http.StatusUnauthorized)
@@ -58,12 +58,12 @@ func (handler *LoginHandler) ServeHTTP(responseWriter http.ResponseWriter, r *ht
 		return
 	}
 
-	resp := loginResponse{
+	respBody := loginResponse{
 		AccessToken: token,
 		TokenType:   "Bearer",
 		ExpiresIn:   int64(handler.tokenTTL.Seconds()),
 	}
 
 	responseWriter.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(responseWriter).Encode(resp)
+	json.NewEncoder(responseWriter).Encode(respBody)
 }
