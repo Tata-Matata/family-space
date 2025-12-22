@@ -21,4 +21,21 @@ registrationService := service.NewRegistrationService(
     db,
     //function reference
     sqlite.NewUserStore,
-) */
+)
+
+loginHandler := http.NewLoginHandler(
+	loginService,
+	15*time.Minute,
+)
+
+mux := http.NewServeMux()
+mux.Handle("/login", loginHandler)
+
+srv := &http.Server{
+	Addr:    ":8080",
+	Handler: mux,
+}
+
+log.Fatal(srv.ListenAndServe())
+
+*/
