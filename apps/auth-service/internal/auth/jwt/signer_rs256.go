@@ -32,7 +32,7 @@ func NewRS256Signer(
 	}
 }
 
-func (s *RS256Signer) SignAccessToken(
+func (s *RS256Signer) GenerateSignedAccessToken(
 	user User,
 	membership Membership,
 ) (string, error) {
