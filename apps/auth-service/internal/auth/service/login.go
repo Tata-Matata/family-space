@@ -3,15 +3,13 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/jwt"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/password"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
-
-var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type User = domain.User
 type Membership = domain.Membership
@@ -70,17 +68,17 @@ func (svc *LoginService) authenticate(ctx context.Context, email string, passwor
 	user, err := userStore.GetByEmail(ctx, email)
 	if err != nil {
 		// hide “user not found” vs “wrong password” distinction
-		return User{}, Membership{}, ErrInvalidCredentials
+		return User{}, Membership{}, errs.ErrInvalidCredentials
 	}
 
 	if err := svc.hash.Compare(user.PasswordHash, password); err != nil {
-		return User{}, Membership{}, ErrInvalidCredentials
+		return User{}, Membership{}, errs.ErrInvalidCredentials
 	}
 
 	membershipStore := svc.membershipProvider(tx)
 	membership, err := membershipStore.GetByUserID(ctx, user.ID)
 	if err != nil {
-		return User{}, Membership{}, ErrInvalidCredentials
+		return User{}, Membership{}, errs.ErrInvalidCredentials
 	}
 
 	if err := tx.Commit(); err != nil {

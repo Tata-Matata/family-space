@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
-	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 )
 
 // We need SQLite stores that can operate inside a transaction.
@@ -34,7 +34,7 @@ func (store *FamilyStoreTransaction) Create(ctx context.Context, family domain.F
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
-			return storage.ErrAlreadyExists
+			return errs.ErrAlreadyExists
 		}
 		return err
 	}

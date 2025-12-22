@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
@@ -54,7 +55,7 @@ func (store *UserStore) GetByEmail(ctx context.Context, email string) (domain.Us
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return domain.User{}, storage.ErrNotFound
+			return domain.User{}, errs.ErrNotFound
 		}
 		return domain.User{}, err
 	}
