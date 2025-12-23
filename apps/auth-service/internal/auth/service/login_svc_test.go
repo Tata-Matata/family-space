@@ -10,9 +10,6 @@ import (
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
-type UserStore = storage.UserStore
-type MembershipStore = storage.MembershipStore
-
 func TestLoginService_Success(test *testing.T) {
 	loginSvc := service.NewLoginService(
 		&fakeDB{

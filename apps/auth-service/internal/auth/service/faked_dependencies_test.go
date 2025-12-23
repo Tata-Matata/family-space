@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
 	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
@@ -12,11 +13,16 @@ import (
 
 type User = domain.User
 type Membership = domain.Membership
+type Family = domain.Family
+
+type UserStore = storage.UserStore
+type MembershipStore = storage.MembershipStore
+type FamilyStore = storage.FamilyStore
 
 /**FAKE DATABASE FOR UNIT TESTS **/
 type fakeSQLExecutor struct{}
 
-func (f *fakeSQLExecutor) ExecContext(
+func (fakeSqlExec *fakeSQLExecutor) ExecContext(
 	ctx context.Context,
 	query string,
 	args ...any,
@@ -24,7 +30,7 @@ func (f *fakeSQLExecutor) ExecContext(
 	panic("ExecContext should not be called in service unit test")
 }
 
-func (f *fakeSQLExecutor) QueryRowContext(
+func (fakeSqlExec *fakeSQLExecutor) QueryRowContext(
 	ctx context.Context,
 	query string,
 	args ...any,
@@ -37,24 +43,26 @@ type fakeDB struct {
 }
 
 // immitates starting db transaction but actually does nothing
-func (f *fakeDB) BeginTransaction(
+func (fakeDB *fakeDB) BeginTransaction(
 	ctx context.Context,
 	readOnly bool,
 ) (storage.SQLExecutor, func(error) error, error) {
-	return f.exec, func(error) error { return nil }, nil
+	return fakeDB.exec, func(error) error { return nil }, nil
 }
 
 /********** USER STORE **********/
 type fakeUserStore struct {
-	user User
-	err  error
+	user   User
+	err    error
+	called bool
 }
 
-func (f *fakeUserStore) GetByEmail(ctx context.Context, email string) (User, error) {
-	return f.user, f.err
+func (fakeUserStore *fakeUserStore) GetByEmail(ctx context.Context, email string) (User, error) {
+	return fakeUserStore.user, fakeUserStore.err
 }
 
-func (f *fakeUserStore) Create(ctx context.Context, user User) error {
+func (fakeUserStore *fakeUserStore) Create(ctx context.Context, user User) error {
+	fakeUserStore.called = true
 	return nil
 }
 
@@ -62,35 +70,55 @@ func (f *fakeUserStore) Create(ctx context.Context, user User) error {
 type fakeMembershipStore struct {
 	membership Membership
 	err        error
+	called     bool
 }
 
-func (f *fakeMembershipStore) GetByUserID(ctx context.Context, userID string) (Membership, error) {
-	if f.membership == (Membership{}) {
+func (fakeMemStore *fakeMembershipStore) GetByUserID(ctx context.Context, userID string) (Membership, error) {
+	if fakeMemStore.membership == (Membership{}) {
 		return Membership{}, errs.ErrInvalidCredentials
 	}
-	return f.membership, nil
+	return fakeMemStore.membership, nil
 }
 
-func (f *fakeMembershipStore) Create(ctx context.Context, membership Membership) error {
+func (fakeMemStore *fakeMembershipStore) Create(ctx context.Context, membership Membership) error {
+	fakeMemStore.called = true
 	return nil
 }
 
-func (f *fakeMembershipStore) GetUserFamily(ctx context.Context, familyID string) (Membership, error) {
-	return f.membership, f.err
+func (fakeMemStore *fakeMembershipStore) GetUserFamily(ctx context.Context, familyID string) (Membership, error) {
+	return fakeMemStore.membership, fakeMemStore.err
 }
 
-type fakeHasher struct{}
+/*** FAKE FAMILY STORE ***/
+type fakeFamilyStore struct {
+	family Family
+	err    error
+	called bool
+}
+
+func (fakeFamilyStore *fakeFamilyStore) Create(ctx context.Context, family Family) error {
+	fakeFamilyStore.called = true
+	if fakeFamilyStore.family == (Family{}) {
+		return errors.New("family not created")
+	}
+	return nil
+}
 
 /********** HASHER INTERFACE **********/
+type fakeHasher struct {
+	called bool
+}
 
-func (f *fakeHasher) Compare(hash, password string) error {
+func (hasher *fakeHasher) Compare(hash, password string) error {
+	hasher.called = true
 	if hash == "hash" {
 		return nil
 	}
 	return errs.ErrInvalidCredentials
 }
 
-func (f *fakeHasher) Hash(password string) (string, error) {
+func (hasher *fakeHasher) Hash(password string) (string, error) {
+	hasher.called = true
 	return "hash", nil
 }
 
@@ -101,6 +129,6 @@ type fakeSigner struct {
 	err   error
 }
 
-func (f *fakeSigner) SignAccessToken(user User, m Membership) (string, error) {
-	return f.token, f.err
+func (signer *fakeSigner) SignAccessToken(user User, m Membership) (string, error) {
+	return signer.token, signer.err
 }

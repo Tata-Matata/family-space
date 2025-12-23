@@ -67,11 +67,23 @@ func (svc *RegistrationService) Register(
 		CreatedAt:    time.Now(),
 	}
 
+	// without transaction we would skip this and pass db directly to the stores
+	userStore := svc.userStoreProvider(exec)
+
+	// create all entities within the transaction
+	if err = userStore.Create(ctx, user); err != nil {
+		return err
+	}
+
 	//FAMILY
 	family := domain.Family{
 		ID:        uuid.NewString(),
 		Name:      familyName,
 		CreatedAt: time.Now(),
+	}
+	familyStore := svc.familyStoreProvider(exec)
+	if err = familyStore.Create(ctx, family); err != nil {
+		return err
 	}
 
 	// MEMBERSHIP
@@ -81,20 +93,8 @@ func (svc *RegistrationService) Register(
 		Role:      "owner",
 		CreatedAt: time.Now(),
 	}
-	// without transaction we would skip this and pass db directly to the stores
-	userStore := svc.userStoreProvider(exec)
-	familyStore := svc.familyStoreProvider(exec)
+
 	memberStore := svc.memberStoreProvider(exec)
-
-	// create all entities within the transaction
-	if err = userStore.Create(ctx, user); err != nil {
-		return err
-	}
-
-	if err = familyStore.Create(ctx, family); err != nil {
-		return err
-	}
-
 	if err = memberStore.Create(ctx, membership); err != nil {
 		return err
 	}
