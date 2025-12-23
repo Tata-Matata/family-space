@@ -3,7 +3,6 @@ package service_test
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
 	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
@@ -18,6 +17,8 @@ type Family = domain.Family
 type UserStore = storage.UserStore
 type MembershipStore = storage.MembershipStore
 type FamilyStore = storage.FamilyStore
+
+const JWTToken = "jwt.token"
 
 /**FAKE DATABASE FOR UNIT TESTS **/
 type fakeSQLExecutor struct{}
@@ -63,7 +64,7 @@ func (fakeUserStore *fakeUserStore) GetByEmail(ctx context.Context, email string
 
 func (fakeUserStore *fakeUserStore) Create(ctx context.Context, user User) error {
 	fakeUserStore.called = true
-	return nil
+	return fakeUserStore.err
 }
 
 /********** MEMBERSHIP STORE **********/
@@ -74,15 +75,13 @@ type fakeMembershipStore struct {
 }
 
 func (fakeMemStore *fakeMembershipStore) GetByUserID(ctx context.Context, userID string) (Membership, error) {
-	if fakeMemStore.membership == (Membership{}) {
-		return Membership{}, errs.ErrInvalidCredentials
-	}
-	return fakeMemStore.membership, nil
+
+	return fakeMemStore.membership, fakeMemStore.err
 }
 
 func (fakeMemStore *fakeMembershipStore) Create(ctx context.Context, membership Membership) error {
 	fakeMemStore.called = true
-	return nil
+	return fakeMemStore.err
 }
 
 func (fakeMemStore *fakeMembershipStore) GetUserFamily(ctx context.Context, familyID string) (Membership, error) {
@@ -98,20 +97,22 @@ type fakeFamilyStore struct {
 
 func (fakeFamilyStore *fakeFamilyStore) Create(ctx context.Context, family Family) error {
 	fakeFamilyStore.called = true
-	if fakeFamilyStore.family == (Family{}) {
-		return errors.New("family not created")
-	}
-	return nil
+
+	return fakeFamilyStore.err
 }
 
 /********** HASHER INTERFACE **********/
+const HASH = "hash"
+
 type fakeHasher struct {
+	err    error
+	hash   string
 	called bool
 }
 
 func (hasher *fakeHasher) Compare(hash, password string) error {
 	hasher.called = true
-	if hash == "hash" {
+	if hash == HASH {
 		return nil
 	}
 	return errs.ErrInvalidCredentials
@@ -119,7 +120,7 @@ func (hasher *fakeHasher) Compare(hash, password string) error {
 
 func (hasher *fakeHasher) Hash(password string) (string, error) {
 	hasher.called = true
-	return "hash", nil
+	return hasher.hash, hasher.err
 }
 
 /********** SIGNER INTERFACE **********/
