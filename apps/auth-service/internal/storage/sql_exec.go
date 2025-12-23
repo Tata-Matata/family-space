@@ -8,7 +8,7 @@ import (
 // abstracts db engine (*sql.DB already implements this interface)
 // to allow mocking in unit tests without relying on real db
 type TransactionManager interface {
-	BeginTransaction(ctx context.Context, readOnly bool) (SQLExecutor, func() error, error)
+	BeginTransaction(ctx context.Context, readOnly bool) (SQLExecutor, func(error) error, error)
 }
 
 // concrete implementation of TransactionManager for sql.DB
@@ -21,18 +21,23 @@ type sqlTransactionManager struct {
 func (transactionMgr *sqlTransactionManager) BeginTransaction(
 	ctx context.Context,
 	readOnly bool,
-) (SQLExecutor, func() error, error) {
+) (SQLExecutor, func(opErr error) error, error) {
 
 	transactionExec, err := transactionMgr.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: readOnly})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	commit := func() error {
+	// deferred function to either commit or rollback transaction
+	finish := func(opErr error) error {
+		if opErr != nil {
+			_ = transactionExec.Rollback()
+			return opErr
+		}
 		return transactionExec.Commit()
 	}
 
-	return transactionExec, commit, nil
+	return transactionExec, finish, nil
 }
 
 // Both *sql.DB and *sql.Tx (transactional) implement this interface

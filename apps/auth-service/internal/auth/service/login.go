@@ -64,12 +64,16 @@ func (svc *LoginService) authenticate(ctx context.Context, email string, passwor
 	// i.e. exec is *sql.Tx (transactional)
 	// non-transactional path would be exec := svc.db
 	// (svc.db implements SQLExecutor)
-	exec, commit, err := svc.db.BeginTransaction(ctx, true)
+	exec, finish, err := svc.db.BeginTransaction(ctx, true)
 	if err != nil {
 		return User{}, Membership{}, err
 	}
-	defer commit()
+	// commit or rollback at the end, depending on error presence
+	defer func() {
+		err = finish(err)
+	}()
 
+	// USER retrieval
 	userStore := svc.userStoreProvider(exec)
 	user, err := userStore.GetByEmail(ctx, email)
 	if err != nil {
@@ -81,14 +85,11 @@ func (svc *LoginService) authenticate(ctx context.Context, email string, passwor
 		return User{}, Membership{}, errs.ErrInvalidCredentials
 	}
 
+	// MEMBERSHIP retrieval
 	membershipStore := svc.membershipProvider(exec)
 	membership, err := membershipStore.GetByUserID(ctx, user.ID)
 	if err != nil {
 		return User{}, Membership{}, errs.ErrInvalidCredentials
-	}
-
-	if err := commit(); err != nil {
-		return User{}, Membership{}, err
 	}
 
 	return user, membership, nil

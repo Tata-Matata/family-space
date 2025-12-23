@@ -10,20 +10,18 @@ import (
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
-type UserStore = storage.UserStore
-type MembershipStore = storage.MembershipStore
-
 func TestLoginService_Success(test *testing.T) {
+
 	loginSvc := service.NewLoginService(
 		&fakeDB{
 			exec: &fakeSQLExecutor{},
 		}, // db unused in unit test
-		&fakeHasher{},
+		&fakeHasher{hash: HASH},
 		func(exec storage.SQLExecutor) UserStore {
 			return &fakeUserStore{
 				user: User{
 					ID:           "u1",
-					PasswordHash: "hash",
+					PasswordHash: HASH,
 					Email:        "a@b.com",
 				},
 			}
@@ -36,8 +34,7 @@ func TestLoginService_Success(test *testing.T) {
 					Role:     "admin",
 				},
 			}
-		},
-		&fakeSigner{token: "jwt.token"},
+		}, &fakeSigner{token: JWTToken},
 	)
 
 	token, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
@@ -45,8 +42,8 @@ func TestLoginService_Success(test *testing.T) {
 		test.Fatalf("unexpected Login error: %v", err)
 	}
 
-	if token != "jwt.token" {
-		test.Fatalf("expected token 'jwt.token', got '%s'", token)
+	if token != JWTToken {
+		test.Fatalf("expected token %s, got '%s'", JWTToken, token)
 	}
 }
 
@@ -55,7 +52,7 @@ func TestLoginService_InvalidPassword(test *testing.T) {
 		&fakeDB{
 			exec: &fakeSQLExecutor{},
 		}, // db unused in unit test
-		&fakeHasher{},
+		&fakeHasher{hash: HASH},
 		func(exec storage.SQLExecutor) UserStore {
 			return &fakeUserStore{
 				user: User{PasswordHash: "wronghash"},
@@ -70,7 +67,7 @@ func TestLoginService_InvalidPassword(test *testing.T) {
 
 	_, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
 	if !errors.Is(err, errs.ErrInvalidCredentials) {
-		test.Fatalf("expected ErrInvalidCredentials")
+		test.Fatalf("expected %v, but got: %v", errs.ErrInvalidCredentials, err)
 	}
 }
 
@@ -79,19 +76,22 @@ func TestLoginService_UserNotFound(test *testing.T) {
 		&fakeDB{
 			exec: &fakeSQLExecutor{},
 		}, // db unused in unit test
-		&fakeHasher{},
+		&fakeHasher{hash: HASH},
 		func(exec storage.SQLExecutor) UserStore {
-			return &fakeUserStore{}
+			//whatever error userStore returns, login svc should obscure it as invalid credentials
+			return &fakeUserStore{
+				err: errs.ErrNotFound,
+			}
 		},
 		func(exec storage.SQLExecutor) MembershipStore {
 			return &fakeMembershipStore{}
 		},
-		&fakeSigner{token: "jwt.token"},
+		&fakeSigner{token: JWTToken},
 	)
 
 	_, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
 	if !errors.Is(err, errs.ErrInvalidCredentials) {
-		test.Fatalf("expected ErrInvalidCredentials")
+		test.Fatalf("expected %v, but got: %v", errs.ErrInvalidCredentials, err)
 	}
 }
 
@@ -100,22 +100,25 @@ func TestLoginService_MembershipNotFound(test *testing.T) {
 		&fakeDB{
 			exec: &fakeSQLExecutor{},
 		}, // db unused in unit test
-		&fakeHasher{},
+		&fakeHasher{hash: HASH},
 		func(exec storage.SQLExecutor) UserStore {
 			return &fakeUserStore{user: User{
 				ID:           "u1",
-				PasswordHash: "hash",
+				PasswordHash: HASH,
 				Email:        "a@b.com",
 			}}
 		},
 		func(exec storage.SQLExecutor) MembershipStore {
-			return &fakeMembershipStore{}
+			//whatever error the store returns, login svc should obscure it as invalid credentials
+			return &fakeMembershipStore{
+				err: errs.ErrNotFound,
+			}
 		},
-		&fakeSigner{token: "jwt.token"},
+		&fakeSigner{token: JWTToken},
 	)
 
 	_, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
 	if !errors.Is(err, errs.ErrInvalidCredentials) {
-		test.Fatalf("expected ErrInvalidCredentials, but got: %v", err)
+		test.Fatalf("expected %v, but got: %v", errs.ErrInvalidCredentials, err)
 	}
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/password"
@@ -16,7 +15,7 @@ type FamilyStoreProvider = storage.FamilyStoreProvider
 type MembershipStoreProvider = storage.MembershipStoreProvider
 
 type RegistrationService struct {
-	db   *sql.DB
+	db   TransactionManager
 	hash password.Hasher
 	//functions to provide stores with attached transaction
 	userStoreProvider   UserStoreProvider
@@ -24,7 +23,8 @@ type RegistrationService struct {
 	memberStoreProvider MembershipStoreProvider
 }
 
-func NewRegistrationService(db *sql.DB,
+func NewRegistrationService(
+	db TransactionManager,
 	hash password.Hasher,
 	userStore UserStoreProvider,
 	familyStore FamilyStoreProvider,
@@ -45,17 +45,16 @@ func (svc *RegistrationService) Register(
 	familyName string,
 ) error {
 	// start a transaction; here the decision is made to use a transaction
-	transaction, err := svc.db.BeginTx(ctx, nil)
+	exec, finish, err := svc.db.BeginTransaction(ctx, false)
 	if err != nil {
 		return err
 	}
-
+	// commit or rollback at the end, depending on error presence
 	defer func() {
-		if err != nil {
-			transaction.Rollback()
-		}
+		err = finish(err)
 	}()
 
+	//USER creation with hashed password
 	hash, err := svc.hash.Hash(password)
 	if err != nil {
 		return err
@@ -68,34 +67,37 @@ func (svc *RegistrationService) Register(
 		CreatedAt:    time.Now(),
 	}
 
+	// without transaction we would skip this and pass db directly to the stores
+	userStore := svc.userStoreProvider(exec)
+
+	// create all entities within the transaction
+	if err = userStore.Create(ctx, user); err != nil {
+		return err
+	}
+
+	//FAMILY
 	family := domain.Family{
 		ID:        uuid.NewString(),
 		Name:      familyName,
 		CreatedAt: time.Now(),
 	}
+	familyStore := svc.familyStoreProvider(exec)
+	if err = familyStore.Create(ctx, family); err != nil {
+		return err
+	}
 
+	// MEMBERSHIP
 	membership := domain.Membership{
 		UserID:    user.ID,
 		FamilyID:  family.ID,
 		Role:      "owner",
 		CreatedAt: time.Now(),
 	}
-	// without transaction we would skip this and pass db directly to the stores
-	userStore := svc.userStoreProvider(transaction)
-	familyStore := svc.familyStoreProvider(transaction)
-	memberStore := svc.memberStoreProvider(transaction)
 
-	if err = userStore.Create(ctx, user); err != nil {
-		return err
-	}
-
-	if err = familyStore.Create(ctx, family); err != nil {
-		return err
-	}
-
+	memberStore := svc.memberStoreProvider(exec)
 	if err = memberStore.Create(ctx, membership); err != nil {
 		return err
 	}
 
-	return transaction.Commit()
+	return nil
 }
