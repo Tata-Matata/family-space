@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
@@ -56,7 +57,7 @@ func (store *MembershipStore) GetByUserID(ctx context.Context, userID string) (M
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return Membership{}, storage.ErrNotFound
+			return Membership{}, errs.ErrNotFound
 		}
 		return Membership{}, err
 	}

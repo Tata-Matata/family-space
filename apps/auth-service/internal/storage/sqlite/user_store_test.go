@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -71,5 +72,5 @@ func TestUserStore_DuplicateEmail(test *testing.T) {
 	require.NoError(test, store.Create(context.Background(), user))
 	err := store.Create(context.Background(), user)
 
-	require.ErrorIs(test, err, storage.ErrAlreadyExists)
+	require.ErrorIs(test, err, errs.ErrAlreadyExists)
 }

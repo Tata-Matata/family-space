@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
@@ -34,7 +35,7 @@ func (store *FamilyStore) Create(ctx context.Context, family domain.Family) erro
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
-			return storage.ErrAlreadyExists
+			return errs.ErrAlreadyExists
 		}
 		return err
 	}
