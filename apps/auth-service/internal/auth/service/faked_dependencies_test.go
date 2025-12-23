@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
@@ -74,9 +75,7 @@ func (f *fakeMembershipStore) GetUserFamily(ctx context.Context, familyID string
 	return f.membership, f.err
 }
 
-type fakeHasher struct {
-	err error
-}
+type fakeHasher struct{}
 
 /********** HASHER INTERFACE **********/
 
@@ -84,11 +83,11 @@ func (f *fakeHasher) Compare(hash, password string) error {
 	if hash == "hash" {
 		return nil
 	}
-	return f.err
+	return errs.ErrInvalidCredentials
 }
 
 func (f *fakeHasher) Hash(password string) (string, error) {
-	return "hash", f.err
+	return "hash", nil
 }
 
 /********** SIGNER INTERFACE **********/

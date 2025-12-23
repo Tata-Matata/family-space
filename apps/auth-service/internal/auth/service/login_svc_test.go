@@ -2,11 +2,16 @@ package service_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/service"
+	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
+
+type UserStore = storage.UserStore
+type MembershipStore = storage.MembershipStore
 
 func TestLoginService_Success(test *testing.T) {
 	loginSvc := service.NewLoginService(
@@ -14,7 +19,7 @@ func TestLoginService_Success(test *testing.T) {
 			exec: &fakeSQLExecutor{},
 		}, // db unused in unit test
 		&fakeHasher{},
-		func(exec storage.SQLExecutor) storage.UserStore {
+		func(exec storage.SQLExecutor) UserStore {
 			return &fakeUserStore{
 				user: User{
 					ID:           "u1",
@@ -23,7 +28,7 @@ func TestLoginService_Success(test *testing.T) {
 				},
 			}
 		},
-		func(exec storage.SQLExecutor) storage.MembershipStore {
+		func(exec storage.SQLExecutor) MembershipStore {
 			return &fakeMembershipStore{
 				membership: Membership{
 					UserID:   "u1",
@@ -42,5 +47,29 @@ func TestLoginService_Success(test *testing.T) {
 
 	if token != "jwt.token" {
 		test.Fatalf("expected token 'jwt.token', got '%s'", token)
+	}
+}
+
+func TestLoginService_InvalidPassword(test *testing.T) {
+	loginSvc := service.NewLoginService(
+		&fakeDB{
+			exec: &fakeSQLExecutor{},
+		}, // db unused in unit test
+		&fakeHasher{},
+		func(exec storage.SQLExecutor) UserStore {
+			return &fakeUserStore{
+				user: User{PasswordHash: "wronghash"},
+			}
+		},
+		func(exec storage.SQLExecutor) MembershipStore {
+			return &fakeMembershipStore{}
+		},
+
+		&fakeSigner{},
+	)
+
+	_, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
+	if !errors.Is(err, errs.ErrInvalidCredentials) {
+		test.Fatalf("expected ErrInvalidCredentials")
 	}
 }
