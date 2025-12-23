@@ -73,3 +73,49 @@ func TestLoginService_InvalidPassword(test *testing.T) {
 		test.Fatalf("expected ErrInvalidCredentials")
 	}
 }
+
+func TestLoginService_UserNotFound(test *testing.T) {
+	loginSvc := service.NewLoginService(
+		&fakeDB{
+			exec: &fakeSQLExecutor{},
+		}, // db unused in unit test
+		&fakeHasher{},
+		func(exec storage.SQLExecutor) UserStore {
+			return &fakeUserStore{}
+		},
+		func(exec storage.SQLExecutor) MembershipStore {
+			return &fakeMembershipStore{}
+		},
+		&fakeSigner{token: "jwt.token"},
+	)
+
+	_, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
+	if !errors.Is(err, errs.ErrInvalidCredentials) {
+		test.Fatalf("expected ErrInvalidCredentials")
+	}
+}
+
+func TestLoginService_MembershipNotFound(test *testing.T) {
+	loginSvc := service.NewLoginService(
+		&fakeDB{
+			exec: &fakeSQLExecutor{},
+		}, // db unused in unit test
+		&fakeHasher{},
+		func(exec storage.SQLExecutor) UserStore {
+			return &fakeUserStore{user: User{
+				ID:           "u1",
+				PasswordHash: "hash",
+				Email:        "a@b.com",
+			}}
+		},
+		func(exec storage.SQLExecutor) MembershipStore {
+			return &fakeMembershipStore{}
+		},
+		&fakeSigner{token: "jwt.token"},
+	)
+
+	_, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
+	if !errors.Is(err, errs.ErrInvalidCredentials) {
+		test.Fatalf("expected ErrInvalidCredentials, but got: %v", err)
+	}
+}

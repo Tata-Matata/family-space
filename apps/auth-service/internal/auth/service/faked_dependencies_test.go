@@ -64,7 +64,10 @@ type fakeMembershipStore struct {
 }
 
 func (f *fakeMembershipStore) GetByUserID(ctx context.Context, userID string) (Membership, error) {
-	return f.membership, f.err
+	if f.membership == (Membership{}) {
+		return Membership{}, errs.ErrInvalidCredentials
+	}
+	return f.membership, nil
 }
 
 func (f *fakeMembershipStore) Create(ctx context.Context, membership Membership) error {
