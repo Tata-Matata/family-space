@@ -6,6 +6,7 @@ import (
 
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/domain"
 	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
+
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
 
@@ -35,12 +36,12 @@ type fakeDB struct {
 	exec storage.SQLExecutor
 }
 
-// immitates starting db transaction
+// immitates starting db transaction but actually does nothing
 func (f *fakeDB) BeginTransaction(
 	ctx context.Context,
 	readOnly bool,
-) (storage.SQLExecutor, func() error, error) {
-	return f.exec, func() error { return nil }, nil
+) (storage.SQLExecutor, func(error) error, error) {
+	return f.exec, func(error) error { return nil }, nil
 }
 
 /********** USER STORE **********/

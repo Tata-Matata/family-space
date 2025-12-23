@@ -36,8 +36,7 @@ func TestLoginService_Success(test *testing.T) {
 					Role:     "admin",
 				},
 			}
-		},
-		&fakeSigner{token: "jwt.token"},
+		}, &fakeSigner{token: "jwt.token"},
 	)
 
 	token, err := loginSvc.Login(context.Background(), "a@b.com", "pw")
