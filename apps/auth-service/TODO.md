@@ -8,6 +8,7 @@
 
 ## Medium Priority
   
+- [ ] Cookies with refresh token (HttpOnly)
 - [ ] Add transactional integration test (SQLite)
 - [ ] Add JWKS endpoint for gateway
 
