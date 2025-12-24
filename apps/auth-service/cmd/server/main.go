@@ -36,6 +36,15 @@ srv := &http.Server{
 	Handler: mux,
 }
 
+
+
+refreshHandler := http.NewRefreshHandler(
+	refreshService,
+	15*time.Minute,
+)
+
+mux.Handle("/refresh", refreshHandler)
+
 log.Fatal(srv.ListenAndServe())
 
 */
