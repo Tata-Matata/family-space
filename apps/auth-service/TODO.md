@@ -4,26 +4,19 @@
 - [ ] unit tests for membership and family store in sqlite
 - [ ] revise testing on different levels (gaps!)
 - [ ] doc testing architecture
+- [ ] service methods too long, extract into funcs
 
 ## Medium Priority
-- [ ] refactor register svc unit test, extract func to create the svc
   
-- [ ] Implement gateway middleware
-
-- [ ] Add JWKS endpoint
-
-- [ ] Add refresh tokens
-
-- [ ] Add rate limiting
-
+- [ ] Cookies with refresh token (HttpOnly)
 - [ ] Add transactional integration test (SQLite)
-
 - [ ] Add JWKS endpoint for gateway
 
 ## LATER Nice-to-haves
-- [ ] Refresh tokens
-- [ ] Session cookies
 - [ ] OAuth / OpenID Connect
 - [ ] Multi-factor authentication
+- [ ] Social login
 - [ ] Token revocation lists
-- [ ] 
+- [ ] Token introspection endpoint
+- [ ] Fine-grained permissions
+- [ ] refactor register svc unit test, extract func to create the svc

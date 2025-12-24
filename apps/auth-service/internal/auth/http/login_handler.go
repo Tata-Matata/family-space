@@ -11,6 +11,7 @@ import (
 	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 )
 
+// Service interface expected by handler
 type LoginService interface {
 	Login(ctx context.Context, email, password string) (string, error)
 }

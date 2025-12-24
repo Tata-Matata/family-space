@@ -19,14 +19,14 @@ type TransactionManager = storage.TransactionMgr
 type LoginService struct {
 	userStoreProvider  UserStoreProvider
 	membershipProvider MembershipStoreProvider
-	hash               password.Hasher
+	hash               password.PasswordHasher
 	db                 TransactionManager
 	tokenSigner        jwt.TokenSigner
 }
 
 func NewLoginService(
 	db TransactionManager,
-	hash password.Hasher,
+	hash password.PasswordHasher,
 	userStoreProvider UserStoreProvider,
 	memberStoreProvider MembershipStoreProvider,
 	tokenSigner jwt.TokenSigner,

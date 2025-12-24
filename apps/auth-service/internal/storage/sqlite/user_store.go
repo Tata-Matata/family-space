@@ -62,3 +62,25 @@ func (store *UserStore) GetByEmail(ctx context.Context, email string) (domain.Us
 
 	return user, nil
 }
+
+func (store *UserStore) GetById(ctx context.Context, id string) (domain.User, error) {
+
+	const query = `
+	  SELECT id, email, password_hash, created_at
+	  FROM users
+	  WHERE id = ?
+	`
+
+	var user domain.User
+	err := store.sql.QueryRowContext(ctx, query, id).
+		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return domain.User{}, errs.ErrNotFound
+		}
+		return domain.User{}, err
+	}
+
+	return user, nil
+}
