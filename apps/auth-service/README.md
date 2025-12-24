@@ -26,20 +26,19 @@ Authorization is delegated to the API Gateway and downstream services.
 
 ## Architecture Overview
 
-#### Client
-  |
-  | POST /login
-  v
-#### Auth Service
-  - validates credentials
-  - reads identity + membership atomically
-  - issues JWT
-  |
-  v
-#### Client receives JWT
-  |
-  | Authorization: Bearer <JWT>
-  v
+```mermaid
+flowchart TD
+A[Client]-->|POST /login|B[Auth Service]-->|validates credentials
+reads identity + membership,
+issues JWT|C[Client with JWT]-->|Authorization: Bearer <JWT>|D[API Gateway]-->| verifies JWT signature
+  validates iss, aud, exp
+  extracts claims into headers|E[Internal Services]--> | 
+  trust gateway
+  consume identity headers|F[End]
+
+```
+  
+
 #### API Gateway
   - verifies JWT signature
   - validates iss / aud / exp
