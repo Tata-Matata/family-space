@@ -27,7 +27,8 @@ Authorization is delegated to the API Gateway and downstream services.
 ## Architecture Overview
 
 ```mermaid
-flowchart TD
+flowchart LR
+
 A[Client]-->|POST /login|B[Auth Service]-->|validates credentials
 reads identity + membership,
 issues JWT|C[Client with JWT]-->|Authorization: Bearer <JWT>|D[API Gateway]-->| verifies JWT signature
