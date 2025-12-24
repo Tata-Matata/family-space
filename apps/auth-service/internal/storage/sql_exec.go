@@ -7,18 +7,18 @@ import (
 
 // abstracts db engine (*sql.DB already implements this interface)
 // to allow mocking in unit tests without relying on real db
-type TransactionManager interface {
+type TransactionMgr interface {
 	BeginTransaction(ctx context.Context, readOnly bool) (SQLExecutor, func(error) error, error)
 }
 
 // concrete implementation of TransactionManager for sql.DB
 // wraps *sql.DB for production use, not testing
-type sqlTransactionManager struct {
+type sqlTransactionMgr struct {
 	db *sql.DB
 }
 
 // starts transactional execution and returns sql.Tx as SQLExecutor
-func (transactionMgr *sqlTransactionManager) BeginTransaction(
+func (transactionMgr *sqlTransactionMgr) BeginTransaction(
 	ctx context.Context,
 	readOnly bool,
 ) (SQLExecutor, func(opErr error) error, error) {

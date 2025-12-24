@@ -14,7 +14,7 @@ type User = domain.User
 type Membership = domain.Membership
 type UserStore = storage.UserStore
 type UserStoreProvider = storage.UserStoreProvider
-type TransactionManager = storage.TransactionManager
+type TransactionManager = storage.TransactionMgr
 
 type LoginService struct {
 	userStoreProvider  UserStoreProvider
