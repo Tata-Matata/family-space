@@ -11,4 +11,5 @@ import (
 type UserStore interface {
 	Create(ctx context.Context, user domain.User) error
 	GetByEmail(ctx context.Context, email string) (domain.User, error)
+	GetById(ctx context.Context, id string) (domain.User, error)
 }

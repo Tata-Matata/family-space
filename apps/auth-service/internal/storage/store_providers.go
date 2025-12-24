@@ -5,3 +5,4 @@ package storage
 type UserStoreProvider func(exec SQLExecutor) UserStore
 type FamilyStoreProvider func(exec SQLExecutor) FamilyStore
 type MembershipStoreProvider func(exec SQLExecutor) MembershipStore
+type RefreshTokenStoreProvider func(exec SQLExecutor) RefreshTokenStore

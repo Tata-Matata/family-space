@@ -66,6 +66,9 @@ func (fakeUserStore *fakeUserStore) Create(ctx context.Context, user User) error
 	fakeUserStore.called = true
 	return fakeUserStore.err
 }
+func (fakeUserStore *fakeUserStore) GetById(ctx context.Context, id string) (User, error) {
+	return fakeUserStore.user, fakeUserStore.err
+}
 
 /********** MEMBERSHIP STORE **********/
 type fakeMembershipStore struct {
