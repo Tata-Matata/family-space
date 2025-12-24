@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth"
+	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/refresh"
 	errs "github.com/Tata-Matata/family-space/apps/auth-service/internal/errors"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 )
@@ -20,9 +20,9 @@ func NewRefreshTokenStore(exec storage.SQLExecutor) storage.RefreshTokenStore {
 	return &RefreshTokenStore{exec: exec}
 }
 
-func (s *RefreshTokenStore) Create(
+func (store *RefreshTokenStore) Create(
 	ctx context.Context,
-	t auth.RefreshToken,
+	token refresh.RefreshToken,
 ) error {
 
 	query := `
@@ -32,24 +32,24 @@ func (s *RefreshTokenStore) Create(
 		) VALUES (?, ?, ?, ?, ?, ?)
 	`
 
-	_, err := s.exec.ExecContext(
+	_, err := store.exec.ExecContext(
 		ctx,
 		query,
-		t.ID,
-		t.UserID,
-		t.TokenHash,
-		t.ExpiresAt,
-		t.RevokedAt,
-		t.CreatedAt,
+		token.ID,
+		token.UserID,
+		token.TokenHash,
+		token.ExpiresAt,
+		token.RevokedAt,
+		token.CreatedAt,
 	)
 
 	return err
 }
 
-func (s *RefreshTokenStore) GetByHash(
+func (store *RefreshTokenStore) GetByHash(
 	ctx context.Context,
 	hash string,
-) (auth.RefreshToken, error) {
+) (refresh.RefreshToken, error) {
 
 	query := `
 		SELECT id, user_id, token_hash,
@@ -58,33 +58,33 @@ func (s *RefreshTokenStore) GetByHash(
 		WHERE token_hash = ?
 	`
 
-	var t auth.RefreshToken
+	var token refresh.RefreshToken
 	var revoked sql.NullTime
 
-	err := s.exec.QueryRowContext(ctx, query, hash).Scan(
-		&t.ID,
-		&t.UserID,
-		&t.TokenHash,
-		&t.ExpiresAt,
+	err := store.exec.QueryRowContext(ctx, query, hash).Scan(
+		&token.ID,
+		&token.UserID,
+		&token.TokenHash,
+		&token.ExpiresAt,
 		&revoked,
-		&t.CreatedAt,
+		&token.CreatedAt,
 	)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return auth.RefreshToken{}, errs.ErrNotFound
+			return refresh.RefreshToken{}, errs.ErrNotFound
 		}
-		return auth.RefreshToken{}, err
+		return refresh.RefreshToken{}, err
 	}
 
 	if revoked.Valid {
-		t.RevokedAt = &revoked.Time
+		token.RevokedAt = &revoked.Time
 	}
 
-	return t, nil
+	return token, nil
 }
 
-func (s *RefreshTokenStore) Revoke(
+func (store *RefreshTokenStore) Revoke(
 	ctx context.Context,
 	id string,
 ) error {
@@ -96,7 +96,7 @@ func (s *RefreshTokenStore) Revoke(
 		  AND revoked_at IS NULL
 	`
 
-	res, err := s.exec.ExecContext(ctx, query, time.Now(), id)
+	res, err := store.exec.ExecContext(ctx, query, time.Now(), id)
 	if err != nil {
 		return err
 	}

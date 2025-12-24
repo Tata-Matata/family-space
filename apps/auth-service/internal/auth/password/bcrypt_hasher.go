@@ -6,6 +6,8 @@ type BcryptHasher struct {
 	cost int
 }
 
+// NewBcryptHasher creates a new BcryptHasher with the given cost.
+// If cost is 0, it uses bcrypt.DefaultCost. Mostly used for password hashing.
 func NewBcryptHasher(cost int) *BcryptHasher {
 	if cost == 0 {
 		cost = bcrypt.DefaultCost

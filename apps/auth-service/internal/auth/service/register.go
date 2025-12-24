@@ -16,7 +16,7 @@ type MembershipStoreProvider = storage.MembershipStoreProvider
 
 type RegistrationService struct {
 	db   TransactionManager
-	hash password.Hasher
+	hash password.PasswordHasher
 	//functions to provide stores with attached transaction
 	userStoreProvider   UserStoreProvider
 	familyStoreProvider FamilyStoreProvider
@@ -25,7 +25,7 @@ type RegistrationService struct {
 
 func NewRegistrationService(
 	db TransactionManager,
-	hash password.Hasher,
+	hash password.PasswordHasher,
 	userStore UserStoreProvider,
 	familyStore FamilyStoreProvider,
 	memberStore MembershipStoreProvider) *RegistrationService {

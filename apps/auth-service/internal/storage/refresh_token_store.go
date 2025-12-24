@@ -3,10 +3,10 @@ package storage
 import (
 	"context"
 
-	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth"
+	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/refresh"
 )
 
-type RefreshToken = auth.RefreshToken
+type RefreshToken = refresh.RefreshToken
 
 type RefreshTokenStore interface {
 	Create(ctx context.Context, token RefreshToken) error
