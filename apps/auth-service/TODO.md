@@ -2,9 +2,11 @@
 
 ## High Priority
 - [ ] unit tests for membership and family store in sqlite
+- [ ] "real", not mocked API tests
 - [ ] revise testing on different levels (gaps!)
 - [ ] doc testing architecture
 - [ ] service methods too long, extract into funcs
+- [ ] 
 
 ## Medium Priority
   
