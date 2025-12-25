@@ -3,12 +3,13 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"log"
 )
 
 // abstracts db engine (*sql.DB already implements this interface)
 // to allow mocking in unit tests without relying on real db
 type TransactionMgr interface {
-	BeginTransaction(ctx context.Context, readOnly bool) (SQLExecutor, func(error) error, error)
+	BeginTransaction(ctx context.Context, readOnly bool) (SQLExecutor, func(error), error)
 }
 
 // concrete implementation of TransactionManager for sql.DB
@@ -21,7 +22,7 @@ type sqlTransactionMgr struct {
 func (transactionMgr *sqlTransactionMgr) BeginTransaction(
 	ctx context.Context,
 	readOnly bool,
-) (SQLExecutor, func(opErr error) error, error) {
+) (SQLExecutor, func(opErr error), error) {
 
 	transactionExec, err := transactionMgr.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: readOnly})
 	if err != nil {
@@ -29,12 +30,17 @@ func (transactionMgr *sqlTransactionMgr) BeginTransaction(
 	}
 
 	// deferred function to either commit or rollback transaction
-	finish := func(opErr error) error {
+	finish := func(opErr error) {
 		if opErr != nil {
-			_ = transactionExec.Rollback()
-			return opErr
+			log.Printf("Rolling back transaction: %v", opErr)
+			if err := transactionExec.Rollback(); err != nil {
+				log.Printf("transaction rollback failed: %v", err)
+			}
+			return
 		}
-		return transactionExec.Commit()
+		if err := transactionExec.Commit(); err != nil {
+			log.Printf("transaction commit failed: %v", err)
+		}
 	}
 
 	return transactionExec, finish, nil

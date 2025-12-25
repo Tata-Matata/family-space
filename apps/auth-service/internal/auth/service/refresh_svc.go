@@ -55,7 +55,7 @@ func (svc *RefreshService) Refresh(
 		return "", "", err
 	}
 	defer func() {
-		err = finish(err)
+		finish(err)
 	}()
 
 	refreshStore := svc.refreshTokenStore(exec)
