@@ -31,7 +31,8 @@ flowchart LR
 
 A[Client]-->|POST /login|B[Auth Service]-->|validates credentials
 reads identity + membership,
-issues JWT|C[Client with JWT]-->|Authorization: Bearer <JWT>|D[API Gateway]-->| verifies JWT signature
+issues short-lived JWT access token,
+issues long-lived refresh token|C[Client with both tokens stored in mem]-->|Authorization: Bearer <JWT>|D[API Gateway]-->| verifies JWT signature
   validates iss, aud, exp
   extracts claims into headers|E[Internal Services]--> | 
   trust gateway
@@ -39,16 +40,6 @@ issues JWT|C[Client with JWT]-->|Authorization: Bearer <JWT>|D[API Gateway]-->| 
 
 ```
   
-
-#### API Gateway
-  - verifies JWT signature
-  - validates iss / aud / exp
-  - extracts claims into headers
-  |
-  v
-#### Internal Services
-  - trust gateway
-  - consume identity headers
 
 This design follows a zero-trust gateway model:
 
@@ -194,6 +185,81 @@ This allows repositories to work with:
 - *sql.Tx (transactional)
 
 without knowing which one they received.
+
+
+## Token Lifecycle: Access Tokens & Refresh Tokens
+The Auth Service implements a two-token model:
+
+- Access tokens (JWT) for API access
+- Refresh tokens (opaque) for session continuity and revocation
+  
+### Access Tokens
+
+- JWTs signed with RS256
+- Short-lived (e.g. 10–15 minutes)
+- Stateless
+- Verified by the API Gateway on every request
+- Cannot be revoked individually and therefore must remain short-lived.
+
+#### Purpose
+
+Allow the gateway and internal services to:
+
+- verify identity offline (without contacting the Auth Service or a database)
+- no network, db, auth svc dependency, fewer failure modes
+- scale horizontally (add more gateways, services, pods with no architectural change)
+
+### Refresh Tokens
+
+- Opaque random strings (not JWTs)
+- Long-lived (e.g. days or weeks)
+- Stored server-side (hashed)
+- Revocable
+- Used only by the Auth Service
+
+#### Purpose
+
+- seamless re-authentication without re-entering credentials
+- explicit logout
+- forced session invalidation (e.g. password change)
+- Refresh tokens are never trusted offline and are always validated against server state.
+
+
+### Refreshing an Access Token
+
+Access tokens are refreshed reactively, not proactively.
+- Client receives 401 Unauthorized from API
+- Access token is expired, Client still has a refresh token
+
+#### Refresh Flow
+
+```mermaid
+flowchart LR
+
+A[Client]-->|POST /refresh with refresh token|B[Auth Service]-->|validates token exists, not expired, not revoked, revokes old, issues new refresh and access tokens|C[Client]-->|replaces both tokens, retries original request|D[END]
+
+```
+
+### Refresh Token Rotation
+
+- Refresh tokens are rotated on every refresh request.
+- Each refresh token can be used only once
+- Replayed tokens are rejected
+- Stolen refresh tokens have limited value
+- Rotation is performed atomically in a single transaction.
+
+### Logout and Token Revocation
+Logout is implemented as refresh token revocation.
+Access tokens are not revoked, they expire naturally
+Refresh token is invalidated immediately
+
+Client:
+
+- clears access token
+- clears refresh token
+- redirects user to login
+
+Logout failures caused by infrastructure issues are surfaced as server errors; invalid or already-revoked tokens are handled silently.
 
 ## Testing Strategy
 
