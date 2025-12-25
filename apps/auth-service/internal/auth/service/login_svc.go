@@ -70,7 +70,7 @@ func (svc *LoginService) authenticate(ctx context.Context, email string, passwor
 	}
 	// commit or rollback at the end, depending on error presence
 	defer func() {
-		err = finish(err)
+		finish(err)
 	}()
 
 	// USER retrieval
