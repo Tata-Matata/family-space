@@ -13,5 +13,4 @@ type Membership = domain.Membership
 type MembershipStore interface {
 	Create(ctx context.Context, m Membership) error
 	GetByUserID(ctx context.Context, userID string) (Membership, error)
-	GetUserFamily(ctx context.Context, userID string) (Membership, error)
 }

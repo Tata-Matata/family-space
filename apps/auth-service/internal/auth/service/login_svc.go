@@ -50,7 +50,7 @@ func (svc *LoginService) Login(
 		return "", err
 	}
 
-	token, err := svc.tokenSigner.SignAccessToken(user, membership)
+	token, err := svc.tokenSigner.GenerateSignedAccessToken(user, membership)
 	if err != nil {
 		return "", err
 	}

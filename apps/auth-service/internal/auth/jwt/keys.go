@@ -20,9 +20,14 @@ func LoadRSAPrivateKey(path string) (*rsa.PrivateKey, error) {
 	}
 
 	// Parse the RSA private key from the PEM block
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	parsed, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
+	}
+
+	key, ok := parsed.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("not RSA private key")
 	}
 
 	return key, nil

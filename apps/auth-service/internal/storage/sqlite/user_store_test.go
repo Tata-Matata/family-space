@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestDB(test *testing.T) *UserStore {
+func setupTestDB(test *testing.T) storage.UserStore {
 	test.Helper()
 
 	dbPath := "test_auth.db"

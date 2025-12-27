@@ -18,6 +18,12 @@ type sqlTransactionMgr struct {
 	db *sql.DB
 }
 
+func NewTransactionMgr(db *sql.DB) TransactionMgr {
+	return &sqlTransactionMgr{
+		db: db,
+	}
+}
+
 // starts transactional execution and returns sql.Tx as SQLExecutor
 func (transactionMgr *sqlTransactionMgr) BeginTransaction(
 	ctx context.Context,

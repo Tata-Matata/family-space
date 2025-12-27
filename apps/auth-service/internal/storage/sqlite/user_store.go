@@ -16,7 +16,7 @@ type UserStore struct {
 	sql storage.SQLExecutor
 }
 
-func NewUserStore(sqlExec storage.SQLExecutor) *UserStore {
+func NewUserStore(sqlExec storage.SQLExecutor) storage.UserStore {
 	return &UserStore{sql: sqlExec}
 }
 
