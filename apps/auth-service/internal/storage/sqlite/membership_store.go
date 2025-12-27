@@ -16,7 +16,7 @@ type MembershipStore struct {
 	sql storage.SQLExecutor
 }
 
-func NewMembershipStore(sqlExec storage.SQLExecutor) *MembershipStore {
+func NewMembershipStore(sqlExec storage.SQLExecutor) storage.MembershipStore {
 	return &MembershipStore{sql: sqlExec}
 }
 

@@ -34,33 +34,33 @@ func NewRefreshHandler(
 	}
 }
 
-func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+func (handler *RefreshHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(response, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req refreshRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+		http.Error(response, "invalid request", http.StatusBadRequest)
 		return
 	}
 
 	req.RefreshToken = strings.TrimSpace(req.RefreshToken)
 	if req.RefreshToken == "" {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		http.Error(response, "invalid request", http.StatusBadRequest)
 		return
 	}
 
 	accessToken, newRefreshToken, err :=
-		h.refreshSvc.Refresh(r.Context(), req.RefreshToken)
+		handler.refreshSvc.Refresh(request.Context(), req.RefreshToken)
 
 	if err != nil {
 		if errors.Is(err, errs.ErrInvalidRefreshToken) {
-			http.Error(w, "invalid refresh token", http.StatusUnauthorized)
+			http.Error(response, "invalid refresh token", http.StatusUnauthorized)
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		http.Error(response, "internal error", http.StatusInternalServerError)
 		return
 	}
 
@@ -68,9 +68,9 @@ func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
 		TokenType:    "Bearer",
-		ExpiresIn:    int64(h.accessTTL.Seconds()),
+		ExpiresIn:    int64(handler.accessTTL.Seconds()),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	response.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(response).Encode(resp)
 }

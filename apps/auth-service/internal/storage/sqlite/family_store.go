@@ -16,7 +16,7 @@ type FamilyStore struct {
 	sql storage.SQLExecutor
 }
 
-func NewFamilyStore(sqlExec storage.SQLExecutor) *FamilyStore {
+func NewFamilyStore(sqlExec storage.SQLExecutor) storage.FamilyStore {
 	return &FamilyStore{sql: sqlExec}
 }
 

@@ -31,31 +31,42 @@ func NewLoginHandler(
 	}
 }
 
-func (handler *LoginHandler) ServeHTTP(responseWriter http.ResponseWriter, httpReq *http.Request) {
-	if httpReq.Method != http.MethodPost {
-		http.Error(responseWriter, "method not allowed", http.StatusMethodNotAllowed)
+type loginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type loginResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int64  `json:"expires_in"`
+}
+
+func (handler *LoginHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(response, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var reqBody loginRequest
-	if err := json.NewDecoder(httpReq.Body).Decode(&reqBody); err != nil {
-		http.Error(responseWriter, "invalid request", http.StatusBadRequest)
+	if err := json.NewDecoder(request.Body).Decode(&reqBody); err != nil {
+		http.Error(response, "invalid request", http.StatusBadRequest)
 		return
 	}
 
 	reqBody.Email = strings.TrimSpace(reqBody.Email)
 	if reqBody.Email == "" || reqBody.Password == "" {
-		http.Error(responseWriter, "invalid request", http.StatusBadRequest)
+		http.Error(response, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	token, err := handler.loginSvc.Login(httpReq.Context(), reqBody.Email, reqBody.Password)
+	token, err := handler.loginSvc.Login(request.Context(), reqBody.Email, reqBody.Password)
 	if err != nil {
 		if errors.Is(err, errs.ErrInvalidCredentials) {
-			http.Error(responseWriter, "invalid credentials", http.StatusUnauthorized)
+			http.Error(response, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
-		http.Error(responseWriter, "internal error", http.StatusInternalServerError)
+		http.Error(response, "internal error", http.StatusInternalServerError)
 		return
 	}
 
@@ -65,6 +76,6 @@ func (handler *LoginHandler) ServeHTTP(responseWriter http.ResponseWriter, httpR
 		ExpiresIn:   int64(handler.tokenTTL.Seconds()),
 	}
 
-	responseWriter.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(responseWriter).Encode(respBody)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(respBody)
 }

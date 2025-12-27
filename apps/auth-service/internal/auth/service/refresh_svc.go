@@ -20,7 +20,7 @@ type RefreshService struct {
 	refreshTokenHasher refresh.RefreshTokenHasher
 	refreshTokenGen    refresh.RefreshTokenGenerator
 	tokenSigner        jwt.TokenSigner
-	accessTokenTTL     time.Duration
+	refreshTokenTtl    time.Duration
 }
 
 func NewRefreshService(
@@ -31,7 +31,7 @@ func NewRefreshService(
 	refreshHasher refresh.RefreshTokenHasher,
 	refreshGen refresh.RefreshTokenGenerator,
 	signer jwt.TokenSigner,
-	accessTTL time.Duration,
+	refreshTTL time.Duration,
 ) *RefreshService {
 	return &RefreshService{
 		transactionMgr:     transactionMgr,
@@ -41,7 +41,7 @@ func NewRefreshService(
 		refreshTokenHasher: refreshHasher,
 		refreshTokenGen:    refreshGen,
 		tokenSigner:        signer,
-		accessTokenTTL:     accessTTL,
+		refreshTokenTtl:    refreshTTL,
 	}
 }
 
@@ -100,7 +100,7 @@ func (svc *RefreshService) Refresh(
 	}
 
 	// 6. Issue new access token
-	accessToken, err := svc.tokenSigner.SignAccessToken(user, membership)
+	accessToken, err := svc.tokenSigner.GenerateSignedAccessToken(user, membership)
 	if err != nil {
 		return "", "", err
 	}
@@ -123,7 +123,7 @@ func (svc *RefreshService) Refresh(
 		UserID:    user.ID,
 		TokenHash: newHash,
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+		ExpiresAt: time.Now().Add(svc.refreshTokenTtl),
 	}
 
 	if err := refreshStore.Create(ctx, tokenStoredInDb); err != nil {

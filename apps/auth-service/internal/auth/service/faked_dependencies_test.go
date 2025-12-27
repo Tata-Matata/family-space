@@ -154,7 +154,7 @@ type fakeSigner struct {
 	err   error
 }
 
-func (signer *fakeSigner) SignAccessToken(user User, m Membership) (string, error) {
+func (signer *fakeSigner) GenerateSignedAccessToken(user User, m Membership) (string, error) {
 	return signer.token, signer.err
 }
 
