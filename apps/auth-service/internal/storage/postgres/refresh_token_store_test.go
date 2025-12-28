@@ -28,7 +28,7 @@ func newTestToken() refresh.RefreshToken {
 
 func TestRefreshTokenStore_CreateAndGetByHash(test *testing.T) {
 	test.Logf("TEST_DATABASE_URL=%q", os.Getenv("TEST_DATABASE_URL"))
-	db := newTestDB(test) // helper you already have or will add
+	db := newTestDB(test)
 	store := postgres.NewRefreshTokenStore(db)
 
 	ctx := context.Background()
