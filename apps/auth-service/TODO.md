@@ -1,6 +1,7 @@
 # TODO List
 
 ## High Priority
+- [ ] refresh token reuse detection
 - [ ] unit tests for membership and family store in sqlite
 - [ ] "real", not mocked API tests
 - [ ] revise testing on different levels (gaps!)
@@ -16,6 +17,7 @@
 
 ## LATER Nice-to-haves
 - [ ] OAuth / OpenID Connect
+- [ ] Docker multi-arch image (in case nodes have diff architecture: amd64, arm64)
 - [ ] Multi-factor authentication
 - [ ] Social login
 - [ ] Token revocation lists

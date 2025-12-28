@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -23,7 +24,7 @@ func main() {
 	}
 
 	// Load RSA private key for JWT signing
-	path := os.Getenv("JWT_PRIVATE_KEY_PATH")
+	path := strings.TrimRight(os.Getenv("JWT_PRIVATE_KEY_PATH"), "/")
 	privateKey, err := jwt.LoadRSAPrivateKey(path)
 
 	if err != nil {
@@ -37,7 +38,11 @@ func main() {
 	)
 
 	// Initialize SQLite storage
-	db, err := sqlite.Open("auth.db")
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		log.Fatal("DB_PATH not set")
+	}
+	db, err := sqlite.Open(dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -96,8 +101,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/register", registerHandler)
 	mux.Handle("/login", loginHandler)
-
 	mux.Handle("/refresh", refreshHandler)
+	mux.Handle("/health", api.NewHealthHandler())
 
 	srv := &http.Server{
 		Addr:    ":8080",

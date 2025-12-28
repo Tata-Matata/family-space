@@ -1,0 +1,44 @@
+# VCS
+.git
+.gitignore
+
+# Editor / IDE
+.vscode
+.idea
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Go build artifacts
+bin/
+dist/
+*.exe
+*.out
+*.test
+
+# Test & coverage output
+coverage/
+*.coverprofile
+
+# Environment & secrets (CRITICAL)
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+keys/
+
+# Logs
+*.log
+
+# Frontend artifacts (if repo is mixed)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker artifacts
+Dockerfile*
+docker-compose*
