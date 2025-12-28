@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +18,7 @@ import (
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/service"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/storage/sqlite"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -38,14 +41,18 @@ func main() {
 	)
 
 	// Initialize SQLite storage
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		log.Fatal("DB_PATH not set")
+	var db *sql.DB
+
+	switch os.Getenv("DB_DRIVER") {
+	case "sqlite":
+		db, err = initSqlite()
+	case "postgres":
+		db, err = initPostgres()
+
+	default:
+		log.Fatal("DB_DRIVER must be set to select database (sqlite or postgres)")
 	}
-	db, err := sqlite.Open(dbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	transactionMgr := storage.NewTransactionMgr(db)
 
 	// REGISTER SERVICE
@@ -111,4 +118,45 @@ func main() {
 
 	log.Fatal(srv.ListenAndServe())
 
+}
+
+func initSqlite() (*sql.DB, error) {
+
+	var db *sql.DB
+
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		log.Fatal("DB_PATH not set")
+	}
+
+	db, err := sqlite.Open(dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("using SQLite database")
+	return db, nil
+}
+
+func initPostgres() (*sql.DB, error) {
+	var db *sql.DB
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL not set")
+	}
+
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("using Postgres database")
+	return db, nil
 }

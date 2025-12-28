@@ -8,7 +8,17 @@
             "mode": "debug",
             "program": "${workspaceFolder}/apps/auth-service/main/main.go",
             "envFile": "${workspaceFolder}/.env"
-        }
+        },
+        {
+            "name": "Debug Postgres Tests",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/storage/postgres",
+            "env": {
+              "TEST_DATABASE_URL": "postgres://user:pwd@localhost:5432/auth?sslmode=disable"
+            }
+          }
 
     ]
 }
