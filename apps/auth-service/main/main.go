@@ -6,10 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
-
-	"github.com/joho/godotenv"
 
 	api "github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/http"
 	"github.com/Tata-Matata/family-space/apps/auth-service/internal/auth/jwt"
@@ -22,12 +19,9 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found (using real env)")
-	}
 
 	// Load RSA private key for JWT signing
-	path := strings.TrimRight(os.Getenv("JWT_PRIVATE_KEY_PATH"), "/")
+	path := os.Getenv("JWT_PRIVATE_KEY_PATH")
 	privateKey, err := jwt.LoadRSAPrivateKey(path)
 
 	if err != nil {

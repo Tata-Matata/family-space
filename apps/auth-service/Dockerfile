@@ -29,7 +29,9 @@ RUN go build -o auth-service ./main
 # =========================
 # Runtime stage
 # =========================
-FROM gcr.io/distroless/base-debian12
+FROM gcr.io/distroless/static-debian12
+
+ENV TZ=UTC
 
 # Create non-root user
 USER nonroot:nonroot
