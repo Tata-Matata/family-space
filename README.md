@@ -4,6 +4,13 @@ A secure, cloud-native family identity and collaboration platform built with a m
 
 > ⚠️ **Project Status: Very Early Stage** — This project is in its initial phases of development. APIs, architecture, and documentation are subject to significant changes. 
 
+## 📦 Repository Structure
+
+This repository contains the **backend** of the Family Space project. For the frontend, see: **[family-space-frontend](https://github.com/Tata-Matata/family-space-frontend)**
+
+- **Backend (this repo)**: Microservices, authentication, APIs, database schemas
+- **Frontend**: Web UI for login, registration, and user-facing features
+
 ## Project Overview
 
 Family Space is a platform that enables family members to securely authenticate, collaborate, and access shared resources. The architecture prioritizes security, scalability, and clear separation of concerns.
